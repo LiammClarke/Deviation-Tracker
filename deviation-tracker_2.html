@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deviation Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080a09;--bg1:#0d100e;--bg2:#111410;--bg3:#161a15;--bg4:#1c211b;
+  --line:rgba(255,255,255,0.06);--line2:rgba(255,255,255,0.10);--line3:rgba(255,255,255,0.16);
+  --text:#eef0ec;--text2:#9ba89a;--text3:#5a6459;
+  --accent:#b8f06a;--accent2:#8fd44a;--ag:rgba(184,240,106,0.15);--ag2:rgba(184,240,106,0.07);
+  --amber:#f5c842;--amberg:rgba(245,200,66,0.12);
+  --red:#ff6b6b;--redg:rgba(255,107,107,0.12);
+  --blue:#7eb8f7;--blueg:rgba(126,184,247,0.10);
+  --r:8px;--r2:12px;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;min-height:100vh;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(184,240,106,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(184,240,106,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;background:rgba(8,10,9,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.hdr-brand{display:flex;align-items:center;gap:14px}
+.logo-box{width:38px;height:38px;background:var(--ag2);border:1px solid rgba(184,240,106,0.18);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-hex{font-family:var(--sans);font-size:18px;font-weight:800;color:var(--accent);letter-spacing:-1px}
+.brand-name{font-family:var(--sans);font-size:15px;font-weight:700;letter-spacing:-0.3px;color:var(--text);line-height:1}
+.brand-sub{font-size:10px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:16px}
+.live{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text3);letter-spacing:0.5px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--accent)}50%{opacity:.6;box-shadow:0 0 16px var(--accent)}}
+.ai-tag{font-size:10px;padding:4px 10px;border-radius:4px;background:var(--ag2);color:var(--accent);border:1px solid rgba(184,240,106,0.15);letter-spacing:.8px}
+
+/* NAV */
+.nav{background:var(--bg1);border-bottom:1px solid var(--line);padding:0 32px;display:flex}
+.ntab{position:relative;padding:16px 24px;font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);cursor:pointer;border:none;background:none;transition:color .25s;display:flex;align-items:center;gap:9px}
+.ntab:hover{color:var(--text2)}
+.ntab.on{color:var(--accent)}
+.ntab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.ntab-n{font-size:9px;opacity:.45;letter-spacing:0}
+.nbadge{font-size:9px;padding:2px 6px;border-radius:3px;background:var(--redg);color:var(--red);border:1px solid rgba(255,107,107,0.2);display:none}
+.nbadge.on{display:inline-block}
+
+/* MAIN */
+.main{padding:32px;max-width:1200px}
+.panel{display:none}
+.panel.on{display:block;animation:fup .3s ease forwards}
+@keyframes fup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION HEADER */
+.sec-hdr{margin-bottom:28px}
+.eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.heading{font-family:var(--sans);font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.5px;line-height:1.2}
+.desc{font-size:12px;color:var(--text3);margin-top:6px;max-width:520px;line-height:1.65}
+
+/* INPUT CARD */
+.icard{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden;margin-bottom:16px;transition:border-color .25s,box-shadow .25s}
+.icard:focus-within{border-color:var(--line3);box-shadow:0 0 0 1px rgba(184,240,106,0.07),0 8px 32px rgba(0,0,0,.45)}
+.icard-hdr{padding:11px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:var(--bg2)}
+.icard-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.ig{background:var(--ag2);color:var(--accent)}
+.ia{background:var(--amberg);color:var(--amber)}
+.ib{background:var(--blueg);color:var(--blue)}
+.icard-lbl{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);flex:1}
+.icard-hint{font-size:10px;color:var(--text3)}
+textarea{width:100%;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:12px;padding:16px 18px;resize:vertical;outline:none;line-height:1.75;min-height:120px}
+textarea::placeholder{color:var(--text3)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* ACTIONS */
+.act-row{display:flex;align-items:center;gap:12px;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--r);font-family:var(--mono);font-size:12px;letter-spacing:.5px;cursor:pointer;border:none;transition:all .2s;font-weight:500}
+.btn-p{background:var(--accent);color:#080a09}
+.btn-p:hover{background:#cbf780;box-shadow:0 0 24px rgba(184,240,106,.35);transform:translateY(-1px)}
+.btn-p:active{transform:translateY(0)}
+.btn-p:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-g{background:transparent;color:var(--text3);border:1px solid var(--line2)}
+.btn-g:hover{color:var(--text2);border-color:var(--line3)}
+.spin{width:13px;height:13px;border:1.5px solid rgba(8,10,9,.25);border-top-color:#080a09;border-radius:50%;animation:sp .65s linear infinite;display:none;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.load-row{display:none;align-items:center;gap:12px;margin-top:14px;font-size:11px;color:var(--text3);letter-spacing:.5px}
+.load-row.on{display:flex}
+.bar-t{width:160px;height:2px;background:var(--bg4);border-radius:1px;overflow:hidden}
+.bar-f{height:100%;width:40%;background:var(--accent);border-radius:1px;box-shadow:0 0 6px var(--accent);animation:bsl 1.2s ease-in-out infinite}
+@keyframes bsl{0%{transform:translateX(-150%)}100%{transform:translateX(450%)}}
+
+/* BANNER */
+.banner{display:none;align-items:center;gap:10px;padding:11px 16px;border-radius:var(--r);font-size:12px;margin-bottom:20px;animation:fup .3s ease}
+.banner.on{display:flex}
+.b-green{background:var(--ag2);border:1px solid rgba(184,240,106,.18);color:var(--accent)}
+
+/* OUTPUT */
+.out-wrap{display:none;margin-top:28px;animation:fup .35s ease}
+.out-wrap.on{display:block}
+.out-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.out-label{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--text)}
+.pill{font-size:10px;padding:3px 10px;border-radius:20px;letter-spacing:.6px;font-family:var(--mono)}
+.pg{background:var(--ag);color:var(--accent);border:1px solid rgba(184,240,106,.2)}
+.pa{background:var(--amberg);color:var(--amber);border:1px solid rgba(245,200,66,.2)}
+.pr{background:var(--redg);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.pb{background:var(--blueg);color:var(--blue);border:1px solid rgba(126,184,247,.15)}
+
+/* PLAN RENDER */
+.summary-box{background:var(--bg2);border:1px solid var(--line);border-left:2px solid var(--accent);border-radius:var(--r);padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:20px}
+.summary-box strong{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.cards-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:20px}
+.ccard{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r2);padding:16px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.ccard:hover{border-color:var(--line2);transform:translateY(-2px)}
+.ccard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.ccard.high::before{background:var(--red);box-shadow:0 0 8px var(--red)}
+.ccard.medium::before{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.ccard.low::before{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.c-person{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;letter-spacing:-.2px}
+.c-dept{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+.c-task{font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:12px}
+.c-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line)}
+.c-dl{font-size:11px;color:var(--text3)}
+.c-dl span{color:var(--text2)}
+.pdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sublbl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.sublbl::before{content:'';width:12px;height:1px;background:var(--accent);box-shadow:0 0 4px var(--accent)}
+.dec-list{display:flex;flex-direction:column;gap:8px}
+.dec-item{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--text2);display:flex;align-items:flex-start;gap:10px}
+.dec-item::before{content:'◦';color:var(--text3);flex-shrink:0;margin-top:1px}
+
+/* DEVIATION RENDER */
+.stats-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.scard{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r2);padding:16px 20px;min-width:110px;position:relative;overflow:hidden}
+.scard::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px}
+.scard.d::after{background:linear-gradient(90deg,var(--red),transparent)}
+.scard.w::after{background:linear-gradient(90deg,var(--amber),transparent)}
+.scard.g::after{background:linear-gradient(90deg,var(--accent),transparent)}
+.snum{font-family:var(--sans);font-size:32px;font-weight:800;line-height:1;margin-bottom:4px;letter-spacing:-1px}
+.snum.d{color:var(--red)}.snum.w{color:var(--amber)}.snum.g{color:var(--accent)}
+.slbl{font-size:10px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase}
+.ssumm{flex:1;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r2);padding:16px 20px;min-width:200px;display:flex;align-items:center}
+.ssumm-t{font-size:12px;color:var(--text2);line-height:1.6}
+.dev-list{display:flex;flex-direction:column;gap:14px}
+.dcard{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden;transition:border-color .2s}
+.dcard:hover{border-color:var(--line2)}
+.dcard-top{padding:14px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative}
+.dcard-top::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.dcard.sh .dcard-top::before{background:var(--red)}
+.dcard.sm .dcard-top::before{background:var(--amber)}
+.dcard.sl .dcard-top::before{background:var(--blue)}
+.d-person{font-family:var(--sans);font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.d-type{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-top:2px}
+.sev{font-size:10px;padding:3px 9px;border-radius:4px;letter-spacing:.8px;text-transform:uppercase;font-family:var(--mono);flex-shrink:0}
+.sev.h{background:var(--redg);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.sev.m{background:var(--amberg);color:var(--amber);border:1px solid rgba(245,200,66,.2)}
+.sev.l{background:var(--blueg);color:var(--blue);border:1px solid rgba(126,184,247,.15)}
+.dcard-body{padding:14px 18px}
+.d-what{font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:14px}
+.diff-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.diff-c{background:var(--bg3);border-radius:var(--r);padding:10px 12px;border:1px solid var(--line)}
+.diff-lbl{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px}
+.diff-c.was .diff-lbl{color:var(--red)}.diff-c.now .diff-lbl{color:var(--accent)}
+.diff-val{font-size:12px;color:var(--text2);line-height:1.5}
+.d-action{background:rgba(245,200,66,.05);border:1px solid rgba(245,200,66,.12);border-radius:var(--r);padding:9px 12px;font-size:11px;color:var(--text3);display:flex;align-items:flex-start;gap:7px;line-height:1.5}
+.d-action-lbl{color:var(--amber);flex-shrink:0}
+.allclear{text-align:center;padding:56px 20px}
+.ac-circle{width:64px;height:64px;border-radius:50%;background:var(--ag2);border:1px solid rgba(184,240,106,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
+.ac-title{font-family:var(--sans);font-size:18px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.ac-sub{font-size:12px;color:var(--text3)}
+.comp-row{margin-top:16px;padding:10px 14px;background:var(--ag2);border:1px solid rgba(184,240,106,.1);border-radius:var(--r);font-size:12px;color:var(--text3);display:flex;align-items:center;gap:8px}
+.comp-lbl{color:var(--accent);flex-shrink:0}
+
+/* HISTORY */
+.hist-list{display:flex;flex-direction:column;gap:8px}
+.hitem{background:var(--bg1);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color .2s,transform .2s}
+.hitem:hover{border-color:var(--line2);transform:translateX(3px)}
+.ht{font-size:12px;color:var(--text);margin-bottom:3px}
+.hs{font-size:11px;color:var(--text3)}
+.hr{display:flex;align-items:center;gap:10px}
+.htime{font-size:10px;color:var(--text3)}
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.eg{font-family:var(--sans);font-size:48px;font-weight:800;color:var(--bg4);margin-bottom:12px;letter-spacing:-2px}
+.et{font-size:13px;color:var(--text2);margin-bottom:5px}
+.es{font-size:11px}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+@media(max-width:720px){.two-col{grid-template-columns:1fr}.diff-g{grid-template-columns:1fr}.hdr,.nav{padding:0 16px}.main{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="logo-box"><div class="logo-hex">DT</div></div>
+    <div>
+      <div class="brand-name">DeviationTracker</div>
+      <div class="brand-sub">Meeting Intelligence System</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="live"><div class="live-dot"></div><span>ENGINE ACTIVE</span></div>
+    <div class="ai-tag">AI POWERED</div>
+  </div>
+</header>
+
+<nav class="nav">
+  <button class="ntab on" onclick="sw('process')"><span class="ntab-n">01</span>Process Meeting</button>
+  <button class="ntab" onclick="sw('monitor')"><span class="ntab-n">02</span>Detect Deviations<span class="nbadge" id="nbadge">!</span></button>
+  <button class="ntab" onclick="sw('history')"><span class="ntab-n">03</span>History</button>
+</nav>
+
+<main class="main">
+
+  <!-- PANEL 1 -->
+  <div class="panel on" id="panel-process">
+    <div class="sec-hdr">
+      <div class="eyebrow">Step One</div>
+      <div class="heading">Extract Agreed Plan</div>
+      <div class="desc">Paste your Fireflies transcript or a meeting summary. The AI extracts every commitment, deadline and responsibility by person — instantly.</div>
+    </div>
+    <div class="banner b-green" id="p-banner">
+      <span>✓</span>
+      <span>Agreed plan saved — switch to <strong>Detect Deviations</strong> to scan your communications.</span>
+    </div>
+    <div class="icard">
+      <div class="icard-hdr">
+        <div class="icard-icon ig">✦</div>
+        <div class="icard-lbl">Meeting transcript or summary</div>
+        <div class="icard-hint">Fireflies.ai / manual</div>
+      </div>
+      <textarea id="t-input" rows="9" placeholder="Paste your Fireflies.ai transcript here, or type what was discussed and agreed...
+
+Example:
+Attendees: Sarah (Finance), John (Operations), Mike (Delivery), Lisa (Fundraising)
+
+Sarah agreed to submit the Q2 budget report by Friday 4 April.
+John will coordinate the warehouse move — completion by 10 April.
+Mike is responsible for client delivery schedule — all orders shipped by 7 April.
+Lisa will finalise the donor proposal and send by Wednesday 2 April.
+Next meeting: Monday 14 April."></textarea>
+    </div>
+    <div class="icard">
+      <div class="icard-hdr">
+        <div class="icard-icon ib">◈</div>
+        <div class="icard-lbl">Context</div>
+        <div class="icard-hint">Optional</div>
+      </div>
+      <textarea id="ctx-input" rows="2" style="min-height:68px" placeholder="Project name, key stakeholders, critical deadlines..."></textarea>
+    </div>
+    <div class="act-row">
+      <button class="btn btn-p" id="p-btn" onclick="processMeeting()">
+        <span class="spin" id="p-spin"></span>
+        <span id="p-lbl">Extract Agreed Plan</span>
+      </button>
+      <button class="btn btn-g" onclick="clearP()">Clear</button>
+    </div>
+    <div class="load-row" id="p-load">
+      <div class="bar-t"><div class="bar-f"></div></div>
+      <span>Analysing transcript...</span>
+    </div>
+    <div class="out-wrap" id="p-out">
+      <div class="out-top">
+        <div class="out-label">Agreed Plan</div>
+        <span class="pill pg" id="c-pill">0 commitments</span>
+      </div>
+      <div id="p-body"></div>
+    </div>
+  </div>
+
+  <!-- PANEL 2 -->
+  <div class="panel" id="panel-monitor">
+    <div class="sec-hdr">
+      <div class="eyebrow">Step Two</div>
+      <div class="heading">Detect Deviations</div>
+      <div class="desc">Paste post-meeting emails or Google Chat messages. The AI compares them against the agreed plan and flags every deviation — with severity, cause, and recommended action.</div>
+    </div>
+    <div class="two-col">
+      <div class="icard">
+        <div class="icard-hdr">
+          <div class="icard-icon ia">⚡</div>
+          <div class="icard-lbl">Communications to scan</div>
+          <div class="icard-hint">Email / Chat</div>
+        </div>
+        <textarea id="c-input" rows="10" placeholder="Paste emails, Google Chat messages, or any post-meeting communications...
+
+From: John (Operations) — 3 April
+Hey Mike, slight change — the warehouse move is going to take until 15 April, not the 10th. The contractor pushed back.
+
+From: Lisa (Fundraising) — 2 April
+Sarah, I won't be able to get the donor proposal done by Wednesday. Pushing to next Monday instead."></textarea>
+      </div>
+      <div class="icard">
+        <div class="icard-hdr">
+          <div class="icard-icon ib">◎</div>
+          <div class="icard-lbl">Agreed plan</div>
+          <div class="icard-hint">Auto-loaded from step 01</div>
+        </div>
+        <textarea id="plan-display" rows="10" placeholder="Process a meeting in tab 01 and the agreed plan loads here automatically. Or paste manually..."></textarea>
+      </div>
+    </div>
+    <div class="act-row">
+      <button class="btn btn-p" id="m-btn" onclick="checkDevs()">
+        <span class="spin" id="m-spin"></span>
+        <span id="m-lbl">Scan for Deviations</span>
+      </button>
+      <button class="btn btn-g" onclick="clearM()">Clear</button>
+    </div>
+    <div class="load-row" id="m-load">
+      <div class="bar-t"><div class="bar-f"></div></div>
+      <span>Comparing communications against agreed plan...</span>
+    </div>
+    <div class="out-wrap" id="m-out">
+      <div class="out-top">
+        <div class="out-label">Deviation Report</div>
+        <span class="pill pa" id="d-pill">0 deviations</span>
+      </div>
+      <div id="m-body"></div>
+    </div>
+  </div>
+
+  <!-- PANEL 3 -->
+  <div class="panel" id="panel-history">
+    <div class="sec-hdr">
+      <div class="eyebrow">Session Log</div>
+      <div class="heading">History</div>
+      <div class="desc">All processed meetings and deviation scans from this session.</div>
+    </div>
+    <div class="hist-list" id="hist-list">
+      <div class="empty">
+        <div class="eg">—</div>
+        <div class="et">No sessions yet</div>
+        <div class="es">Process a meeting transcript to get started.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+let planText='', hist=[];
+
+function sw(tab){
+  document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('on',['process','monitor','history'][i]===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('panel-'+tab).classList.add('on');
+}
+function clearP(){document.getElementById('t-input').value='';document.getElementById('ctx-input').value='';document.getElementById('p-out').classList.remove('on');document.getElementById('p-banner').classList.remove('on')}
+function clearM(){document.getElementById('c-input').value='';document.getElementById('m-out').classList.remove('on')}
+
+async function api(sys,user){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:user}]})});
+  const d=await r.json();return d.content[0].text;
+}
+
+async function processMeeting(){
+  const t=document.getElementById('t-input').value.trim();
+  if(!t){alert('Please paste a meeting transcript first.');return;}
+  const btn=document.getElementById('p-btn'),sp=document.getElementById('p-spin'),lbl=document.getElementById('p-lbl'),ld=document.getElementById('p-load');
+  btn.disabled=true;sp.style.display='block';lbl.textContent='Processing...';ld.classList.add('on');document.getElementById('p-out').classList.remove('on');
+  const ctx=document.getElementById('ctx-input').value.trim();
+  const sys=`You are a meeting intelligence system. Extract every commitment, deadline and responsibility from a meeting transcript. Return ONLY valid JSON, no markdown fences:
+{"meeting_summary":"one sentence","meeting_date":"date or Today","commitments":[{"person":"","department":"","task":"","deadline":"","priority":"high|medium|low"}],"key_decisions":["..."],"next_meeting":""}`;
+  try{
+    const raw=await api(sys,`${ctx?'Context: '+ctx+'\n\n':''}Transcript:\n${t}`);
+    const plan=JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,'').trim());
+    planText=fmtPlan(plan);
+    document.getElementById('plan-display').value=planText;
+    document.getElementById('p-banner').classList.add('on');
+    document.getElementById('c-pill').textContent=plan.commitments.length+' commitment'+(plan.commitments.length!==1?'s':'');
+    renderPlan(plan);
+    addHist('meeting',plan.meeting_summary||'Meeting processed',plan.commitments.length+' commitments extracted',plan);
+  }catch(e){document.getElementById('p-body').innerHTML=`<div style="color:var(--red);font-size:12px;padding:16px">Error: ${e.message}</div>`;document.getElementById('p-out').classList.add('on');}
+  btn.disabled=false;sp.style.display='none';lbl.textContent='Extract Agreed Plan';ld.classList.remove('on');
+}
+
+function fmtPlan(p){
+  let t=`MEETING: ${p.meeting_summary}\nDATE: ${p.meeting_date}\n\nCOMMITMENTS:\n`;
+  p.commitments.forEach(c=>{t+=`• ${c.person}${c.department?' ('+c.department+')':''}: ${c.task} — by ${c.deadline} [${c.priority.toUpperCase()}]\n`;});
+  if(p.key_decisions?.length){t+=`\nKEY DECISIONS:\n`;p.key_decisions.forEach(d=>t+=`• ${d}\n`);}
+  if(p.next_meeting)t+=`\nNEXT MEETING: ${p.next_meeting}`;
+  return t;
+}
+
+function renderPlan(p){
+  let h='';
+  if(p.meeting_summary)h+=`<div class="summary-box"><strong>Meeting Summary</strong>${p.meeting_summary}${p.next_meeting?'<span style="display:block;margin-top:6px;font-size:11px;color:var(--text3)">Next meeting: '+p.next_meeting+'</span>':''}</div>`;
+  if(p.commitments?.length){
+    h+=`<div class="sublbl">Commitments by person</div><div class="cards-g">`;
+    p.commitments.forEach(c=>{
+      const col=c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--accent)';
+      h+=`<div class="ccard ${c.priority}"><div class="c-person">${c.person}</div>${c.department?`<div class="c-dept">${c.department}</div>`:''}<div class="c-task">${c.task}</div><div class="c-foot"><div class="c-dl">Due: <span>${c.deadline}</span></div><div class="pdot" style="background:${col};box-shadow:0 0 5px ${col}"></div></div></div>`;
+    });
+    h+=`</div>`;
+  }
+  if(p.key_decisions?.length){h+=`<div class="sublbl" style="margin-top:20px">Key decisions</div><div class="dec-list">`;p.key_decisions.forEach(d=>{h+=`<div class="dec-item">${d}</div>`;});h+=`</div>`;}
+  document.getElementById('p-body').innerHTML=h;document.getElementById('p-out').classList.add('on');
+}
+
+async function checkDevs(){
+  const comms=document.getElementById('c-input').value.trim();
+  const plan=document.getElementById('plan-display').value.trim()||planText;
+  if(!comms){alert('Please paste communications to analyse.');return;}
+  if(!plan){alert('No agreed plan found. Process a meeting first (tab 01) or paste the plan manually.');return;}
+  const btn=document.getElementById('m-btn'),sp=document.getElementById('m-spin'),lbl=document.getElementById('m-lbl'),ld=document.getElementById('m-load');
+  btn.disabled=true;sp.style.display='block';lbl.textContent='Scanning...';ld.classList.add('on');document.getElementById('m-out').classList.remove('on');
+  const sys=`You are a deviation detection engine. Compare post-meeting communications against an agreed plan and identify deviations. Return ONLY valid JSON, no markdown fences:
+{"total_deviations":0,"compliant_items":0,"summary":"one sentence","deviations":[{"person":"","severity":"high|medium|low","type":"deadline_change|deliverable_change|responsibility_shift|scope_change|other","what_changed":"","original":"","new":"","source":"","action_needed":""}],"compliant_people":[]}
+Only flag genuine deviations, not minor clarifications.`;
+  try{
+    const raw=await api(sys,`AGREED PLAN:\n${plan}\n\nCOMMUNICATIONS:\n${comms}`);
+    const res=JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,'').trim());
+    renderDevs(res);
+    const b=document.getElementById('nbadge');b.textContent=res.total_deviations;b.classList.toggle('on',res.total_deviations>0);
+    addHist('scan','Deviation scan',res.total_deviations+' deviation(s) found — '+res.summary,res);
+  }catch(e){document.getElementById('m-body').innerHTML=`<div style="color:var(--red);font-size:12px;padding:16px">Error: ${e.message}</div>`;document.getElementById('m-out').classList.add('on');}
+  btn.disabled=false;sp.style.display='none';lbl.textContent='Scan for Deviations';ld.classList.remove('on');
+}
+
+function renderDevs(r){
+  const tot=r.total_deviations||0;
+  const pill=document.getElementById('d-pill');
+  pill.textContent=tot+' deviation'+(tot!==1?'s':'')+' found';
+  pill.className='pill '+(tot===0?'pg':tot>2?'pr':'pa');
+  const sc=tot>2?'d':tot>0?'w':'g';
+  let h=`<div class="stats-row"><div class="scard ${sc}"><div class="snum ${sc}">${tot}</div><div class="slbl">Deviations</div></div><div class="scard g"><div class="snum g">${r.compliant_items||0}</div><div class="slbl">On Track</div></div><div class="ssumm"><div class="ssumm-t">${r.summary||''}</div></div></div>`;
+  if(tot===0){
+    h+=`<div class="allclear"><div class="ac-circle">✓</div><div class="ac-title">All clear</div><div class="ac-sub">All communications align with the agreed plan.</div>${r.compliant_people?.length?`<div style="margin-top:10px;font-size:11px;color:var(--text3)">Compliant: ${r.compliant_people.join(', ')}</div>`:''}</div>`;
+  } else {
+    h+=`<div class="sublbl">Deviations requiring your attention</div><div class="dev-list">`;
+    r.deviations.forEach(d=>{
+      const s=d.severity||'medium',sc2=s==='high'?'sh':s==='medium'?'sm':'sl',sc3=s==='high'?'h':s==='medium'?'m':'l';
+      h+=`<div class="dcard ${sc2}"><div class="dcard-top"><div><div class="d-person">${d.person}</div><div class="d-type">${(d.type||'').replace(/_/g,' ')}</div></div><span class="sev ${sc3}">${s}</span></div><div class="dcard-body"><div class="d-what">${d.what_changed}</div><div class="diff-g"><div class="diff-c was"><div class="diff-lbl">Agreed in meeting</div><div class="diff-val">${d.original}</div></div><div class="diff-c now"><div class="diff-lbl">Now saying</div><div class="diff-val">${d.new}</div></div></div>${d.action_needed?`<div class="d-action"><span class="d-action-lbl">Action →</span>${d.action_needed}</div>`:''}</div></div>`;
+    });
+    h+=`</div>`;
+    if(r.compliant_people?.length)h+=`<div class="comp-row"><span class="comp-lbl">✓ On track</span>${r.compliant_people.join(', ')}</div>`;
+  }
+  document.getElementById('m-body').innerHTML=h;document.getElementById('m-out').classList.add('on');
+}
+
+function addHist(type,title,sub,data){
+  hist.unshift({type,title,sub,data,time:new Date().toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'}),date:new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'short'})});
+  renderHist();
+}
+function renderHist(){
+  const list=document.getElementById('hist-list');
+  if(!hist.length){list.innerHTML='<div class="empty"><div class="eg">—</div><div class="et">No sessions yet</div><div class="es">Process a meeting to get started.</div></div>';return;}
+  list.innerHTML=hist.map((e,i)=>`<div class="hitem" onclick="loadH(${i})"><div><div class="ht">${e.title}</div><div class="hs">${e.sub}</div></div><div class="hr"><span class="pill ${e.type==='meeting'?'pg':'pa'}">${e.type==='meeting'?'MEETING':'SCAN'}</span><span class="htime">${e.date} ${e.time}</span></div></div>`).join('');
+}
+function loadH(i){const e=hist[i];if(e.type==='meeting'){sw('process');renderPlan(e.data);document.getElementById('p-out').classList.add('on');}else{sw('monitor');renderDevs(e.data);document.getElementById('m-out').classList.add('on');}}
+</script>
+</body>
+</html>
